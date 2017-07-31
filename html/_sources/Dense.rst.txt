@@ -1,0 +1,7 @@
+Dense module
+============
+
+.. automodule:: Dense
+    :members:
+    :undoc-members:
+    :show-inheritance:
