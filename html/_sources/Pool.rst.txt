@@ -1,0 +1,7 @@
+Pool module
+===========
+
+.. automodule:: Pool
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,0 +1,7 @@
+Datasets module
+===============
+
+.. automodule:: Datasets
+    :members:
+    :undoc-members:
+    :show-inheritance:
