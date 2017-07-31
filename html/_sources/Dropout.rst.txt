@@ -1,7 +1,0 @@
-Dropout module
-==============
-
-.. automodule:: Dropout
-    :members:
-    :undoc-members:
-    :show-inheritance:

@@ -1,7 +1,0 @@
-Layer module
-============
-
-.. automodule:: Layer
-    :members:
-    :undoc-members:
-    :show-inheritance:
