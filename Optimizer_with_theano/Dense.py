@@ -3,6 +3,19 @@ from Layer import *
 
 class dense_layer(Layer):
     def __init__(self, obj, n_out, name=None):
+        """Provides a unique UID given a string prefix.
+            # Arguments
+              prefix: string.
+            # Returns
+              An integer.
+            # Example
+            ```python
+                >>> keras.backend.get_uid('dense')
+                1
+                >>> keras.backend.get_uid('dense')
+                2
+            ```
+        """
         super().__init__(obj, name=name)
         self.n_out   = (n_out,)
         print(*self.n_in, n_out)
