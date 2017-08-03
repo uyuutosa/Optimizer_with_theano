@@ -1,4 +1,4 @@
 # Optimizer_with_theano
 Simple deep learning or machine learning framework for now.
 
-Manual page is [https://uyuutosa.github.io/Optimizer_with_theano](here).
+Manual page is [here](https://uyuutosa.github.io/Optimizer_with_theano).
