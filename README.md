@@ -9,7 +9,7 @@ You can install as type
 pip install Optimizer_with_theano
 ```
 
-Test mnist with multiclass logistic regression
+Test MNIST with multiclass logistic regression
 
 ```python
 import Optimizer_with_theano as op
@@ -76,9 +76,9 @@ ylabel("y")
 legend(["data", "labels"])
 ```
 
-![spring](spring.png)
+![spring](images/spring.png)
 
-Trying to learning thies data using bellow network(so called UFCNN)
+Trying to learn this data using bellow network(so called UFCNN)
 
 ```python
 o = op.optimizer(n_batch=100)
@@ -106,7 +106,7 @@ Loss value can be viewed by
 o.view()
 ```
 
-![drastic](drastic_decrease.png)
+![drastic](images/drop.png)
 
 and comparing between predict and grand truth using dataset for checking.
 
@@ -122,7 +122,7 @@ legend(["data", "predict"])
 ```
 
 
-![compareing](true_pred.png)
+![compareing](images/true_pred.png)
 
 
 Lastly, evaluate the performance of this prediction model using randomly generated data as follows.
@@ -148,7 +148,7 @@ for i in range(1,10,1):
 
 ```
 
-![true_pred_err](true_pred_err.png)
+![true_pred_err](images/true_pred_err.png)
 
 This model seemed to be able to predit exactly.
 However, it should be noted that this coarse evaluation does not serve as any reference.
