@@ -1,0 +1,14 @@
+Metadata-Version: 1.1
+Name: Optimizer-with-theano
+Version: 0.1.3
+Summary: Package Dependency: Validates package requirements
+Home-page: https://github.com/uyuutosa/Optimizer_with_theano
+Author: uyuutosa
+Author-email: sayu819@gmail.com
+License: MIT
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: License :: OSI Approved :: MIT License
