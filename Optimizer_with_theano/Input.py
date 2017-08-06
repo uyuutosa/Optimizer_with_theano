@@ -1,6 +1,6 @@
-from Layer import *
+from .Layer import *
 
-class Input():
+class Input_layer():
     def __init__(self, obj, name=None):
         self.obj = obj
         self.n_in = self.n_out = obj.x_train_arr.shape[1:]

@@ -2,10 +2,9 @@ import theano
 import theano.tensor.signal as signal
 import numpy as np
 from sklearn.datasets import *
-from Layer import *
+from .Layer import *
 
-
-class pool_layer(Layer):
+class Pool_layer(Layer):
     def __init__(self, obj, ds=(2,2), name=None):
         super().__init__(obj, name=name)
         self.ds  = ds

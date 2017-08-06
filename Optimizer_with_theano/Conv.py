@@ -5,7 +5,7 @@ import theano.tensor.signal as signal
 import numpy as np
 from sklearn.datasets import *
 
-from Layer import *
+from .Layer import *
 
 
 class Conv2D_layer(Layer):

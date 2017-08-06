@@ -1,4 +1,4 @@
-from Layer import *
+from .Layer import *
 
 
 class Reshape(Layer):

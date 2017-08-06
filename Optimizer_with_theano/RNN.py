@@ -5,7 +5,7 @@ import theano.tensor.signal as signal
 import numpy as np
 from sklearn.datasets import *
 
-from Layer import *
+from .Layer import *
 
 
 class RNN_layer(Layer):

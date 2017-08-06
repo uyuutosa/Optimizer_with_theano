@@ -19,13 +19,17 @@ import pickle
 import sys
 sys.setrecursionlimit(10000)
 
-import Conv
-import RNN
-import Input
-import Dense 
-import Pool
-import Modify
-import Datasets as ds
+from .Input import Input_layer
+from .Dense import Dense_layer
+from .Conv import Conv2D_layer
+from .RNN  import RNN_layer
+
+from .Pool import Pool_layer
+from .Modify import Flatten, Reshape
+from .Datasets import set_datasets
+#import Datasets as ds
+
+_EPSILON = 10e-8
 
 theano.config.exception_verbosity = "high"
 
@@ -78,7 +82,7 @@ class optimizer:
             self.y_test_arr  = y_arr[lim:]
         
         self.nodelst = [[int(np.prod(self.x_train_arr.shape[1:]))]] # if nodelst is None else nodelst
-        self.layerlst = [Input.Input(self)]
+        self.layerlst = [Input_layer(self)]
         
         self.train_xgivenlst = [self.x_train_arr]
         self.train_ygivenlst = [self.y_train_arr]
@@ -119,18 +123,19 @@ class optimizer:
             self.y = T.tensor4("y")
             
         self.out = self.x  #if out is None else out
-        self.batch_shape_of_C = T.concatenate([T.as_tensor([self.n_batch]), theano.shared(np.array([3]))], axis=0)
+        #self.batch_shape_of_C = T.concatenate([T.as_tensor([self.n_batch]), theano.shared(np.array([3]))], axis=0)
         self.xlst = [self.x]
         self.ylst = [self.y]
         
-    def set_datasets(self, data="mnist", data_home="data_dir_for_optimizer", is_one_hot=True):
+    def set_datasets(self, data="mnist", is_one_hot=True):
         obj = self.copy()
-        obj.set_data(*ds.set_datasets(data, data_home, is_one_hot))
+        obj.set_data(*set_datasets(data, is_one_hot))
         obj.set_variables()
         return obj
     
     def copy(self):
-        return cp.copy(self)
+        return self
+        #return cp.copy(self)
     
     def update_node(self, n_out):
         self.nodelst = self.nodelst + [n_out]
@@ -148,14 +153,14 @@ class optimizer:
         
     def dense(self, n_out):
         obj = self.copy()
-        layer = Dense.dense_layer(obj, n_out)
+        layer = Dense_layer(obj, n_out)
         obj   = layer.update()
         obj.layerlst += [layer]
         return obj
     
     def rnn(self, axis=1, is_out=True):
         obj = self.copy()
-        layer = RNN.RNN_layer(obj, axis, is_out)
+        layer = RNN_layer(obj, axis, is_out)
         obj   = layer.update()
         obj.layerlst += [layer]
         return obj
@@ -214,7 +219,7 @@ class optimizer:
     
     def conv2d(self, kshape=(1,1,3,3), mode="full", reshape=None):
         obj = self.copy()
-        layer = Conv.Conv2D_layer(obj, kshape, mode, reshape)
+        layer = Conv2D_layer(obj, kshape, mode, reshape)
         obj   = layer.update()
         obj.layerlst += [layer]
         return obj
@@ -241,7 +246,7 @@ class optimizer:
     
     def pool(self, ds=(2,2)):
         obj = self.copy()
-        layer = Pool.pool_layer(obj, ds)
+        layer = Pool_layer(obj, ds)
         obj   = layer.update()
         obj.layerlst += [layer]
         return obj
@@ -256,7 +261,7 @@ class optimizer:
     
     def reshape(self, shape):
         obj = self.copy()
-        layer = Modify.Reshape(obj, shape)
+        layer = Reshape(obj, shape)
         obj   = layer.update()
         obj.layerlst += [layer]
         return obj
@@ -269,7 +274,7 @@ class optimizer:
     
     def flatten(self):
         obj = self.copy()
-        layer = Modify.Flatten(obj)
+        layer = Flatten(obj)
         obj   = layer.update()
         obj.layerlst += [layer]
         return obj
@@ -330,13 +335,13 @@ class optimizer:
     
     def loss_cross_entropy(self):
         obj = self.copy()
-        _EPSILON = 10e-8
         obj.out = T.clip(obj.out, _EPSILON, 1.0 - _EPSILON)
-        obj.loss =  nnet.categorical_crossentropy(obj.out, obj.y).sum()
+        obj.loss =  nnet.categorical_crossentropy(obj.out, obj.y).mean()
         #obj.loss =  T.mean(nnet.categorical_crossentropy(obj.out, obj.y))
         #obj.loss =  -T.mean(obj.y * T.log(obj.out + 1e-8) -(1-obj.y) * T.log(1-obj.out + 1e-8))
         obj.out  = obj.out.argmax(axis=1)[:,None]
         obj.y    = obj.y.argmax(axis=1)[:,None]
+        obj.params = obj.params[::-1]
         return obj
     
     def loss_softmax_cross_entropy(self):
@@ -442,6 +447,11 @@ class optimizer:
             test_ygivens += [(t, ygiven_shared[obj.idx[i:obj.n_batch+i],])]
             test_ygivens_acc += [(t, ygiven_shared)]
             
+        #obj.debug_y = theano.function(inputs=[i],
+        #                                outputs=obj.ylst,
+        #                                givens=train_xgivens+train_ygivens,
+        #                                updates=obj.updatelst,
+        #                                on_unused_input='ignore')
         
         obj.train_loss = theano.function(inputs=[i],
                                         outputs=obj.loss,
@@ -477,7 +487,7 @@ class optimizer:
     
         return obj
             
-    def optimize(self, n_epoch=10, n_view=1000):
+    def optimize(self, n_epoch=10, n_view=1000, n_iter=None):
         obj = self.copy()
         
         if obj.n_view is None: obj.n_view = n_view  
@@ -503,9 +513,10 @@ class optimizer:
                 
                 mean_loss = 0.
                 N = obj.dsize-obj.n_batch.get_value() + 1
-                step = obj.n_batch.get_value()
+                if n_iter is None:
+                    n_iter = obj.n_batch.get_value()
                 lst = []
-                for i in range(0, N, step):
+                for i in range(0, N, n_iter):
                     lst += [obj.train_loss(i)]
                 mean_loss = (np.array(lst)).mean()#  / step
                 obj.loss_value += lst

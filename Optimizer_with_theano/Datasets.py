@@ -3,15 +3,18 @@ from sklearn.datasets import fetch_mldata
 import numpy as np
 
  
-def set_datasets(data="mnist", data_home="data_dir_for_optimizer", is_one_hot=True):
-        
+def set_datasets(data="mnist", is_one_hot=True, is_normalize=True):
+    data_home="/".join(__file__.split("/")[:-1])+"/data_dir_for_optimizer"
     if data == "mnist":
         data_dic = fetch_mldata('MNIST original', data_home=data_home)
-#        if is_one_hot == True:
-#            idx = data_dic["target"]
-#            arr = np.zeros((idx.shape[0],10)).flatten()
-#            arr[idx.flatten().astype(int) + np.arange(idx.shape[0]) * int(idx.max())]  = 1
-#            data_dic["target"] = arr.reshape(idx.shape[0], 10)
+        if is_one_hot == True:
+            idx = data_dic["target"]
+            num = int(idx.max()+1)
+            arr = np.zeros((idx.shape[0],num)).flatten()
+            arr[idx.flatten().astype(int) + np.arange(idx.shape[0]) * num]  = 1
+            data_dic["target"] = arr.reshape(idx.size, num)
+        if is_normalize == True:
+            data_dic["data"] = data_dic["data"] / 255
     elif data == "boston":
         data_dic = load_boston()   
     elif data == "digits":
@@ -30,9 +33,5 @@ def set_datasets(data="mnist", data_home="data_dir_for_optimizer", is_one_hot=Tr
         data_dic = {"data": np.arange(0,10,0.01)[:,None],
                         "target": np.sin(np.arange(0,10,0.01) * np.pi)}
     
-    if is_one_hot == True:
-        idx = data_dic["target"]
-        arr = np.zeros((idx.shape[0],10)).flatten()
-        arr[idx.flatten().astype(int) + np.arange(idx.shape[0]) * int(idx.max())]  = 1
-        data_dic["target"] = arr.reshape(idx.shape[0], 10)
+        
     return data_dic["data"], data_dic["target"]

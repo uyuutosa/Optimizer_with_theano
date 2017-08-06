@@ -27,7 +27,8 @@ version = next((line.split('=')[1].strip().replace("'", '')
 setup(
     name="Optimizer_with_theano",
     packages=["Optimizer_with_theano"],
-    version=version,
+    version="0.1.2",
+    #version=version,
     url='https://github.com/uyuutosa/Optimizer_with_theano',
     author='uyuutosa',
     author_email='sayu819@gmail.com',
@@ -35,7 +36,8 @@ setup(
     maintainer_email='sayu819@gmail.com',
     description='Package Dependency: Validates package requirements',
     long_description=readme,
-    install_requires=_requires_from_file('requirements.txt'),
+    install_requires=["theano"],
+    #install_requires=_requires_from_file('requirements.txt'),
     license="MIT",
     classifiers=[
         'Programming Language :: Python :: 3',

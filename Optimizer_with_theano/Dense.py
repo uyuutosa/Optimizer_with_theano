@@ -1,7 +1,7 @@
-from Layer import *
+from .Layer import *
 
 
-class dense_layer(Layer):
+class Dense_layer(Layer):
     def __init__(self, obj, n_out, name=None):
         """Provides a unique UID given a string prefix.
             # Arguments
@@ -18,10 +18,8 @@ class dense_layer(Layer):
         """
         super().__init__(obj, name=name)
         self.n_out   = (n_out,)
-        print(*self.n_in, n_out)
         self.theta   = theano.shared(np.random.rand(*self.n_in, n_out).astype(theano.config.floatX),
                                     borrow=True)
-        #self.b       = theano.shared(np.random.rand(1).astype(dtype=theano.config.floatX)[0],
         self.b       = theano.shared(np.random.rand(n_out).astype(dtype=theano.config.floatX),
                                     borrow=True)
         self.obj.params += [self.theta, self.b]
