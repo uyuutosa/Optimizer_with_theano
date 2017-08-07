@@ -18,3 +18,4 @@ Optimizer_with_theano.egg-info/dependency_links.txt
 Optimizer_with_theano.egg-info/entry_points.txt
 Optimizer_with_theano.egg-info/requires.txt
 Optimizer_with_theano.egg-info/top_level.txt
+Optimizer_with_theano/data_dir_for_optimizer/mldata/mnist-original.mat

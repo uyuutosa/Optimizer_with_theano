@@ -86,8 +86,8 @@ class optimizer:
         
         self.train_xgivenlst = [self.x_train_arr]
         self.train_ygivenlst = [self.y_train_arr]
-        self.test_xgivenlst = [self.x_train_arr]
-        self.test_ygivenlst = [self.y_train_arr]
+        self.test_xgivenlst = [self.x_test_arr]
+        self.test_ygivenlst = [self.y_test_arr]
         
     
     def set_variables(self):
@@ -143,13 +143,13 @@ class optimizer:
     def get_curr_node(self):
         return list(self.nodelst[-1])
     
-    def dropout(self, rate=0.5, seed=None):
-        obj = self.copy()
-        
-        srng = RandomStreams(seed)
-        obj.out = T.where(srng.uniform(size=obj.out.shape) > rate, obj.out, 0)
-        
-        return obj
+    #def dropout(self, rate=0.5, seed=None):
+    #    obj = self.copy()
+    #    
+    #    srng = RandomStreams(seed)
+    #    obj.out = T.where(srng.uniform(size=obj.out.shape) > rate, obj.out, 0)
+    #    
+    #    return obj
         
     def dense(self, n_out):
         obj = self.copy()
@@ -165,56 +165,56 @@ class optimizer:
         obj.layerlst += [layer]
         return obj
     
-    def lstm(self):
-        obj = self.copy()
-        
-        curr_shape = obj.get_curr_node()
-        n_in = n_out = curr_shape[-1]
-        
-        #batch_shape_of_h = T.concatenate(
-        #batch_shape_of_C = T.concatenate(, axis=0)
-#        h = T.ones(theano.sharedl())
-        h = T.zeros([obj.n_batch, *curr_shape], dtype=theano.config.floatX)
-        C = T.zeros([obj.n_batch, n_out], dtype=theano.config.floatX)
-        
-        Wi =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
-        Wf =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
-        Wc =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
-        Wo =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
-        bi =  theano.shared(np.random.rand(n_out).astype(theano.config.floatX))
-        bf =  theano.shared(np.random.rand(n_out).astype(theano.config.floatX))
-        bc =  theano.shared(np.random.rand(n_out).astype(theano.config.floatX))
-        bo =  theano.shared(np.random.rand(n_out).astype(theano.config.floatX))
-        Ui =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
-        Uf =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
-        Uc =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
-        Uo =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
-        
-        i = nnet.sigmoid(obj.out.dot(Wi) + h.dot(Ui) + bi)
-        
-        C_tilde = T.tanh(obj.out.dot(Wc) + h.dot(Uc) + bc)
-        
-        f = nnet.sigmoid(obj.out.dot(Wf) + h.dot(Uf) + bf)
-        
-        tmp = (i * C_tilde + f * C).reshape(C.shape)
-        
-        obj.tmplst += [(C, tmp)]
-        
-        C = tmp
-        
-        o = nnet.sigmoid(obj.out.dot(Wo) + h.dot(Uo) + bo)
-        
-        tmp = (o * T.tanh(C)).reshape(h.shape)
-        
-        obj.tmplst += [(h, tmp)]
-        
-        obj.out =  tmp
-        
-        obj.thetalst += [Wi, bi, Ui, Wf, bf, Uf, Wc, bc, Uc, Wo, bo, Uo]
-        
-        obj.update_node([n_out])
-        
-        return obj
+    #def lstm(self):
+    #    obj = self.copy()
+    #    
+    #    curr_shape = obj.get_curr_node()
+    #    n_in = n_out = curr_shape[-1]
+    #    
+    #    #batch_shape_of_h = T.concatenate(
+    #    #batch_shape_of_C = T.concatenate(, axis=0)
+#   #     h = T.ones(theano.sharedl())
+    #    h = T.zeros([obj.n_batch, *curr_shape], dtype=theano.config.floatX)
+    #    C = T.zeros([obj.n_batch, n_out], dtype=theano.config.floatX)
+    #    
+    #    Wi =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
+    #    Wf =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
+    #    Wc =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
+    #    Wo =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
+    #    bi =  theano.shared(np.random.rand(n_out).astype(theano.config.floatX))
+    #    bf =  theano.shared(np.random.rand(n_out).astype(theano.config.floatX))
+    #    bc =  theano.shared(np.random.rand(n_out).astype(theano.config.floatX))
+    #    bo =  theano.shared(np.random.rand(n_out).astype(theano.config.floatX))
+    #    Ui =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
+    #    Uf =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
+    #    Uc =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
+    #    Uo =  theano.shared(np.random.rand(n_in, n_out).astype(theano.config.floatX))
+    #    
+    #    i = nnet.sigmoid(obj.out.dot(Wi) + h.dot(Ui) + bi)
+    #    
+    #    C_tilde = T.tanh(obj.out.dot(Wc) + h.dot(Uc) + bc)
+    #    
+    #    f = nnet.sigmoid(obj.out.dot(Wf) + h.dot(Uf) + bf)
+    #    
+    #    tmp = (i * C_tilde + f * C).reshape(C.shape)
+    #    
+    #    obj.tmplst += [(C, tmp)]
+    #    
+    #    C = tmp
+    #    
+    #    o = nnet.sigmoid(obj.out.dot(Wo) + h.dot(Uo) + bo)
+    #    
+    #    tmp = (o * T.tanh(C)).reshape(h.shape)
+    #    
+    #    obj.tmplst += [(h, tmp)]
+    #    
+    #    obj.out =  tmp
+    #    
+    #    obj.thetalst += [Wi, bi, Ui, Wf, bf, Uf, Wc, bc, Uc, Wo, bo, Uo]
+    #    
+    #    obj.update_node([n_out])
+    #    
+    #    return obj
 
     
     def conv2d(self, kshape=(1,1,3,3), mode="full", reshape=None):
@@ -447,14 +447,10 @@ class optimizer:
             test_ygivens += [(t, ygiven_shared[obj.idx[i:obj.n_batch+i],])]
             test_ygivens_acc += [(t, ygiven_shared)]
             
-        #obj.debug_y = theano.function(inputs=[i],
-        #                                outputs=obj.ylst,
-        #                                givens=train_xgivens+train_ygivens,
-        #                                updates=obj.updatelst,
-        #                                on_unused_input='ignore')
         
-        obj.train_loss = theano.function(inputs=[i],
-                                        outputs=obj.loss,
+        train_acc = (T.eq(obj.out,obj.y).sum().astype(theano.config.floatX) / obj.n_batch)
+        obj.train_loss_and_acc = theano.function(inputs=[i],
+                                        outputs=[obj.loss, train_acc],
                                         givens=train_xgivens+train_ygivens,
                                         #givens=[(obj.x,x_train_arr_shared[obj.idx[i:obj.n_batch+i],]),
                                         #        (obj.y,y_train_arr_shared[obj.idx[i:obj.n_batch+i],])],
@@ -463,22 +459,13 @@ class optimizer:
                                         #mode=NanGuardMode(nan_is_error=True, inf_is_error=True, big_is_error=True), 
                                         on_unused_input='ignore')
         
-        obj.train_acc = theano.function(inputs=[],
-                                      #outputs=((T.eq(obj.out2[:,None],obj.y))),
-                                      outputs=(T.eq(obj.out,obj.y).sum().astype(theano.config.floatX) / obj.x_train_arr.shape[0]),
-                                      #outputs=((T.eq(obj.out,obj.y)).sum().astype(theano.config.floatX) / obj.x_train_arr.shape[0]),
-                                      givens=train_xgivens_acc+train_ygivens_acc,
-                                      on_unused_input='ignore')
         
-        obj.valid_loss = theano.function(inputs=[],
-                                        outputs=obj.loss,
+        valid_acc = (T.eq(obj.out,obj.y).sum().astype(theano.config.floatX) / obj.x_test_arr.shape[0])
+        obj.valid_loss_and_acc = theano.function(inputs=[],
+                                        outputs=[obj.loss, valid_acc],
                                         givens=test_xgivens_acc+test_ygivens_acc,
                                         on_unused_input='ignore')
         
-        obj.valid_acc = theano.function(inputs=[],
-                                      outputs=(T.eq(obj.out,obj.y).sum().astype(theano.config.floatX) / obj.x_train_arr.shape[0]),
-                                      givens=test_xgivens_acc+test_ygivens_acc,
-                                      on_unused_input='ignore')
         
         obj.pred_func = theano.function(inputs  = obj.xlst,#[obj.x],
                                         outputs = obj.out,
@@ -491,8 +478,12 @@ class optimizer:
         obj = self.copy()
         
         if obj.n_view is None: obj.n_view = n_view  
-        obj.loss_value = []
+        obj.train_loss_lst = []
+        obj.train_acc_lst  = []
+        obj.valid_loss_lst = []
+        obj.valid_acc_lst  = []
         try:
+            obj.n_epoch = n_epoch
             for epoch in range(n_epoch):
                 #obj.idx.set_value(np.random.permutation(obj.x_train_arr.shape[0]))
                 #img = self.params[0]
@@ -508,6 +499,7 @@ class optimizer:
                 #    cv2.imshow("hello{}".format(i), img)
                 #cv2.waitKey(0)
                 
+                # update randomized index
                 tmp = np.random.permutation(obj.x_train_arr.shape[0])
                 obj.idx.set_value(tmp)
                 
@@ -515,19 +507,27 @@ class optimizer:
                 N = obj.dsize-obj.n_batch.get_value() + 1
                 if n_iter is None:
                     n_iter = obj.n_batch.get_value()
-                lst = []
+                train_loss_lst = []
+                train_acc_lst = []
                 for i in range(0, N, n_iter):
-                    lst += [obj.train_loss(i)]
-                mean_loss = (np.array(lst)).mean()#  / step
-                obj.loss_value += lst
+                    train_loss_value, train_acc_value = obj.train_loss_and_acc(i)
+                    train_loss_lst += [train_loss_value]
+                    train_acc_lst  += [train_acc_value]
+                valid_loss_value, valid_acc_value = obj.valid_loss_and_acc()
+                train_mean_loss_value = np.array(train_loss_lst).mean()
+                train_mean_acc_value  = np.array(train_acc_lst).mean()
+                obj.train_loss_lst   += train_loss_lst
+                obj.train_acc_lst    += train_acc_lst
+                obj.valid_loss_lst   += [valid_loss_value]
+                obj.valid_acc_lst    += [valid_acc_value]
                 if not (epoch % n_view):
                     print("Epoch. %s: loss = %.4e, acc = %.4e, valid. loss = %.4e, valid. acc. = %.4e." %(epoch, 
-                                                                                                        mean_loss, 
-                                                                                                        obj.train_acc(), 
-                                                                                                        obj.valid_loss(),
-                                                                                                        obj.valid_acc()))
+                                                                                                        train_mean_loss_value, 
+                                                                                                        train_mean_acc_value, 
+                                                                                                        valid_loss_value,
+                                                                                                        valid_acc_value))
             
-        except KeyboardInterrupt  :
+        except KeyboardInterrupt:
             print ( "KeyboardInterrupt\n" )
             return obj
         return obj
@@ -548,14 +548,27 @@ class optimizer:
             
         
     def view(self, yscale="log"):
-        if not len(self.loss_value):
+        if not len(self.train_loss_lst):
             raise ValueError("Loss value is not be set.")
         plt.clf()
+
+        train_idx = np.linspace(0, self.n_epoch, len(self.train_loss_lst))
+        valid_idx = np.arange(self.n_epoch)
         
-        plt.xlabel("IterNum [x%s]" %self.n_view)
+        plt.subplot(2,1,1)
         plt.ylabel("Loss")
         plt.yscale(yscale)
-        plt.plot(self.loss_value)
+        plt.plot(train_idx, self.train_loss_lst, c="r", label="train")
+        plt.plot(valid_idx, self.valid_loss_lst, c="b", label="validate")
+        plt.legend()
+
+        plt.subplot(2,1,2)
+        plt.ylim(0, 1.1)
+        plt.xlabel("Epoch")
+        plt.ylabel("Accuracy")
+        plt.plot(train_idx, self.train_acc_lst, c="r", label="train")
+        plt.plot(valid_idx, self.valid_acc_lst, c="b", label="validate")
+        plt.legend()
         plt.show()
     
     def view_graph(self, width='100%', res=60):
