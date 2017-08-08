@@ -5,19 +5,41 @@ import theano.tensor.signal as signal
 import numpy as np
 from sklearn.datasets import *
 
+from .Initializer import Initializer
 from .Layer import *
 
 
 class Conv2D_layer(Layer):
-    def __init__(self, obj, kshape=(1,1,3,3), mode="full", reshape=None, name=None):
+    def __init__(self, 
+                 obj, 
+                 kshape=(1,1,3,3), 
+                 mode="full", 
+                 reshape=None, 
+                 init_kinds="xavier",
+                 random_kinds="normal",
+                 random_params=(0, 1),
+                 name=None
+                ):
         super().__init__(obj, name=name)
         self.obj     = obj.copy()
         self.kshape  = kshape
         self.mode    = mode
         self.reshape = reshape
-        self.theta   = theano.shared(np.random.rand(*kshape).astype(dtype=theano.config.floatX), borrow=True)
-        self.b       = theano.shared(np.random.rand(1).astype(dtype=theano.config.floatX)[0], borrow=True)
-        self.obj.params += [self.theta, self.b]
+        #self.theta   = theano.shared(np.random.uniform(0, 0.05, ).astype(dtype=theano.config.floatX), borrow=True)
+        #self.b       = theano.shared(np.random.uniform(0, 0.05, 1).astype(dtype=theano.config.floatX)[0], borrow=True)
+        self.theta   = theano.shared(Initializer(name=init_kinds,
+                                                 random_kinds=random_kinds,
+                                                 random_params=random_params,
+                                                 shape=kshape,
+                                                 ).out.astype(dtype=theano.config.floatX), borrow=True)
+        #self.b       = theano.shared(Initializer(name=init_kinds,
+        #                                         n_in=n_in,
+        #                                         n_out=n_out,
+        #                                         random_kinds=random_kinds,
+        #                                         random_params=random_params,
+        #                                         shape=(n_out),
+        #                                         ).out.astype(dtype=theano.config.floatX), borrow=True)
+        self.obj.params += [self.theta]#, self.b]
 
     def out(self):
         obj = self.obj
@@ -37,10 +59,10 @@ class Conv2D_layer(Layer):
     
         if self.mode == "full":
             n_out = (self.kshape[0], n_in[-2] + (self.kshape[-2] - 1), n_in[-1] + (self.kshape[-1] - 1))
-            obj.out = nnet.conv2d(obj.out, self.theta, border_mode=self.mode) + self.b
+            obj.out = nnet.conv2d(obj.out, self.theta, border_mode=self.mode) #+ self.b
         elif self.mode == "valid":
             n_out = (self.kshape[0], n_in[-2] - (self.kshape[-2] - 1), n_in[-1] - (self.kshape[-1] - 1))
-            obj.out = nnet.conv2d(obj.out, self.theta, border_mode=self.mode) + self.b
+            obj.out = nnet.conv2d(obj.out, self.theta, border_mode=self.mode) #+ self.b
         else:
             n_out   = (self.kshape[0], n_in[-2], n_in[-1])
             h_v, w_v = n_out[-2], n_out[-1]
@@ -58,7 +80,7 @@ class Conv2D_layer(Layer):
             if h_right == 0: h_right = -1
             if h_left  == 0: h_left = -1
             
-            obj.out = nnet.conv2d(obj.out, self.theta, border_mode="full")[:,:, h_left:-h_right, w_left:-w_right] + self.b
+            obj.out = nnet.conv2d(obj.out, self.theta, border_mode="full")[:,:, h_left:-h_right, w_left:-w_right] #+ self.b
 
         self.n_out = n_out
         

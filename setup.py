@@ -27,7 +27,7 @@ version = next((line.split('=')[1].strip().replace("'", '')
 setup(
     name="Optimizer_with_theano",
     packages=["Optimizer_with_theano"],
-    version="0.1.8",
+    version="0.1.13",
     #version=version,
     url='https://github.com/uyuutosa/Optimizer_with_theano',
     author='uyuutosa',

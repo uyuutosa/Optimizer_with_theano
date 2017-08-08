@@ -27,9 +27,8 @@ class Flatten(Layer):
 
     def out(self):
         obj = self.obj
-        print(self.n_in)
-        self.n_out = np.array(self.n_in).prod()
-        obj.out = obj.out.reshape((-1, self.n_out))
+        self.n_out = (np.array(self.n_in).prod(),)
+        obj.out = obj.out.reshape((-1, *self.n_out))
         obj.update_node(self.n_out)
         return obj
 

@@ -21,6 +21,7 @@ sys.setrecursionlimit(10000)
 
 from .Input import Input_layer
 from .Dense import Dense_layer
+from .Polynominal import Polynominal_layer
 from .Conv import Conv2D_layer
 from .RNN  import RNN_layer
 
@@ -151,16 +152,45 @@ class optimizer:
     #    
     #    return obj
         
-    def dense(self, n_out):
+    def dense(self, 
+              n_out,
+              init_kinds="xavier",
+              random_kinds="normal",
+              random_params=(0, 1),
+              name=None
+             ):
         obj = self.copy()
-        layer = Dense_layer(obj, n_out)
+        layer = Dense_layer(obj, 
+                            n_out,
+                            init_kinds,
+                            random_kinds,
+                            random_params
+                           )
         obj   = layer.update()
         obj.layerlst += [layer]
         return obj
     
-    def rnn(self, axis=1, is_out=True):
+    def rnn(self, 
+            n_out, 
+            axis=0, 
+            init_kinds="xavier",
+            random_kinds="normal",
+            random_params=(0, 1),
+            is_out=True,
+            name=None,
+            activation="relu",
+           ):
         obj = self.copy()
-        layer = RNN_layer(obj, axis, is_out)
+        layer = RNN_layer(obj,
+                          n_out, 
+                          axis, 
+                          init_kinds,
+                          random_kinds,
+                          random_params,
+                          is_out,
+                          name,
+                          activation
+                          )
         obj   = layer.update()
         obj.layerlst += [layer]
         return obj
@@ -217,14 +247,35 @@ class optimizer:
     #    return obj
 
     
-    def conv2d(self, kshape=(1,1,3,3), mode="full", reshape=None):
+    def conv2d(self, 
+               kshape=(1,1,3,3), 
+               mode="full", 
+               reshape=None,
+               init_kinds="xavier",
+               random_kinds="normal",
+               random_params=(0, 1),
+               name=None
+              ):
         obj = self.copy()
-        layer = Conv2D_layer(obj, kshape, mode, reshape)
+        layer = Conv2D_layer(obj, 
+                             kshape, 
+                             mode, 
+                             reshape,
+                             init_kinds,
+                             random_kinds,
+                             random_params,
+                             name
+                            )
         obj   = layer.update()
         obj.layerlst += [layer]
         return obj
     
-    def conv_and_pool(self, fnum, height, width, mode="full", ds=(2,2)):
+    def conv_and_pool(self, 
+                      fnum, 
+                      height, 
+                      width, 
+                      mode="full", 
+                      ds=(2,2)):
         obj = self.copy()
         n_in = obj.layerlst[-1].n_out
         #n_in = obj.get_curr_node()
@@ -279,28 +330,49 @@ class optimizer:
         obj.layerlst += [layer]
         return obj
     
-    def taylor(self, M, n_out):
+    def poly(self, 
+              M,
+              n_out,
+              init_kinds="xavier",
+              random_kinds="normal",
+              random_params=(0, 1),
+              activation="linear",
+              name=None
+             ):
         obj = self.copy()
-        n_in = int(np.asarray(obj.get_curr_node()).sum())
-        
-        x_times = T.concatenate([obj.out, T.ones((obj.n_batch, 1)).astype(theano.config.floatX)],axis=1)
-        for i in range(M-1):
-            idx = np.array([":,"]).repeat(i+1).tolist()
-            a = dict()
-            exec ("x_times = x_times[:," + "".join(idx) + "None] * x_times", locals(), a)
-            x_times = a["x_times"]
-
-        x_times = x_times.reshape((obj.n_batch, -1))
-
-        theta = theano.shared(np.ones(((n_in+1) ** M, n_out)).astype(theano.config.floatX))
-        obj.theta = theano.shared(np.ones(((n_in+1) ** M, n_out)).astype(theano.config.floatX))
-        
-        obj.out = x_times.dot(theta.astype(theano.config.floatX))
-        obj.thetalst += [theta]
-        
-        obj.update_node([n_out])
-        
+        layer = Polynominal_layer(obj, 
+                            M,
+                            n_out,
+                            init_kinds,
+                            random_kinds,
+                            random_params,
+                            activation,
+                            name
+                           )
+        obj   = layer.update()
+        obj.layerlst += [layer]
         return obj
+        #obj = self.copy()
+        #n_in = int(np.asarray(obj.get_curr_node()).sum())
+        #
+        #x_times = T.concatenate([obj.out, T.ones((obj.n_batch, 1)).astype(theano.config.floatX)],axis=1)
+        #for i in range(M-1):
+        #    idx = np.array([":,"]).repeat(i+1).tolist()
+        #    a = dict()
+        #    exec ("x_times = x_times[:," + "".join(idx) + "None] * x_times", locals(), a)
+        #    x_times = a["x_times"]
+#
+        #x_times = x_times.reshape((obj.n_batch, -1))
+#
+        #theta = theano.shared(np.ones(((n_in+1) ** M, n_out)).astype(theano.config.floatX))
+        #obj.theta = theano.shared(np.ones(((n_in+1) ** M, n_out)).astype(theano.config.floatX))
+        #
+        #obj.out = x_times.dot(theta.astype(theano.config.floatX))
+        #obj.thetalst += [theta]
+        #
+        #obj.update_node([n_out])
+        #
+        #return obj
 
         
     def relu(self, ):
@@ -467,6 +539,7 @@ class optimizer:
                                         on_unused_input='ignore')
         
         
+        
         obj.pred_func = theano.function(inputs  = obj.xlst,#[obj.x],
                                         outputs = obj.out,
                                         updates = obj.tmplst,
@@ -529,6 +602,7 @@ class optimizer:
             
         except KeyboardInterrupt:
             print ( "KeyboardInterrupt\n" )
+            obj.n_epoch = epoch
             return obj
         return obj
     

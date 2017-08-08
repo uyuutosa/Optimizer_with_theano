@@ -5,15 +5,32 @@ import theano.tensor.signal as signal
 import numpy as np
 from sklearn.datasets import *
 
+from .Initializer import *
 from .Layer import *
+from .Activation import *
 
 
 class RNN_layer(Layer):
-    def __init__(self, obj, axis=-1, is_out=True, name=None):
+    def __init__(self, 
+                 obj, 
+                 n_out, 
+                 axis=-1,  
+                 init_kinds="xavier", 
+                 random_kinds="normal", 
+                 random_params=(0, 1),
+                 is_out=True, 
+                 name=None, 
+                 activation=None):
         super().__init__(obj, name=name)
         self.obj     = obj.copy()
+        self.n_in = n_in = np.array(obj.layerlst[-1].n_out).prod()
+        #list(n_in.pop(axis)
+        #if not len(n_in):
+        #    n_in = (1,)
+            
         self.axis = axis
         self.is_out = is_out
+        self.activation = activation
         tidx = list(range(np.array(obj.layerlst[-1].n_out).size))
         tidx.pop(axis)
         self.tidx = tidx = np.concatenate([ np.array([0]), np.array(tidx + [self.axis]) + 1])
@@ -22,18 +39,46 @@ class RNN_layer(Layer):
         n_rand = self.tshape[:-1].prod()
         if n_rand == 0:
             n_rand = 1
-        self.theta   = theano.shared(np.random.rand(n_rand, n_rand).astype(dtype=theano.config.floatX), borrow=True)
-        self.b       = theano.shared(np.random.rand(1).astype(dtype=theano.config.floatX)[0], borrow=True)
+            
+        self.theta   = theano.shared(Initializer(name=init_kinds,
+                                                 n_in=n_in,
+                                                 n_out=n_out,
+                                                 random_kinds=random_kinds,
+                                                 random_params=random_params,
+                                                 shape=(n_in, n_out),
+                                                 ).out.astype(dtype=theano.config.floatX), borrow=True)
+        
+        self.theta2   = theano.shared(Initializer(name=init_kinds,
+                                                 n_in=n_in,
+                                                 n_out=n_out,
+                                                 random_kinds=random_kinds,
+                                                 random_params=random_params,
+                                                 shape=(n_out, n_out),
+                                                 ).out.astype(dtype=theano.config.floatX), borrow=True)
+        self.b       = theano.shared(Initializer(name=init_kinds,
+                                                 n_in=n_in,
+                                                 n_out=n_out,
+                                                 random_kinds=random_kinds,
+                                                 random_params=random_params,
+                                                 shape=(n_out),
+                                                 ).out.astype(dtype=theano.config.floatX), borrow=True)
         self.obj.params += [self.theta, self.b]
 
     def out(self):
         obj = self.obj
-        tout = self.obj.out.transpose(self.tidx)
+        tout = obj.out.transpose(*self.tidx)
        
-        arr = tout[:, 0:1].dot(self.theta)
+        arr = tout[..., 0].dot(self.theta)
+        if len(self.n_in) == 1:
+            arr = arr[...,None]
+            
+            
+        #arr = tout[..., 0:1].dot(self.theta)
+        print(arr.shape.eval({obj.x:obj.x_train_arr}))
         lst = [arr]
-        for i in range(1, obj.layerlst[-1].n_out[0]):
-            arr += tout[:, i:i+1].dot(self.theta) + self.b
+        for i in range(1, self.n_in):
+            arr += Activation(self.activation)(tout[..., i].dot(self.theta)) + self.b + self.theta2.dot(arr)
+            #arr += Activation(self.activation)(tout[..., i:i+1].dot(self.theta)) + self.b + self.theta2.dot(arr)
             if self.is_out:
                 lst += [arr]
             
