@@ -107,8 +107,8 @@ o1 =  o.conv2d((1, 1, 1, 5), mode="same").relu()
 o2 = o1.conv2d((1, 1, 1, 5), mode="same").relu()
 o3 = o2.conv2d((1, 1, 1, 5), mode="same").relu()
 o4 = o3.conv2d((1, 1, 1, 5), mode="same").relu()
-o5 = o4.conv2d((1, 1, 1, 5), mode="same").relu() + o2 #前段の畳込み層をマージ
-o6 = o5.conv2d((1, 1, 1, 5), mode="same").relu() + o1 #前段の畳込み層をマージ
+o5 = o4.conv2d((1, 1, 1, 5), mode="same").relu() + o2
+o6 = o5.conv2d((1, 1, 1, 5), mode="same").relu() + o1
 o7 = o6.conv2d((1, 1, 1, 5), mode="same").relu()
 o8 = o7.conv2d((1, 1, 1, 10), mode="valid")
 o9 = o8.flatten()

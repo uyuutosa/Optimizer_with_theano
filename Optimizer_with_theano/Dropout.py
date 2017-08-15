@@ -1,19 +1,24 @@
-from Layer import *
-#import theano
+from .Layer import *
+#from theano.tensor.shared_randomstreams import RandomStreams
+from theano.sandbox.rng_mrg import MRG_RandomStreams 
+import theano
 #import theano.tensor as T
 #import theano.tensor.nnet as nnet
 #import theano.tensor.signal as signal
 #import numpy as np
 #from sklearn.datasets import *
 
-class Dropout():
-    def __init__(self, obj, rate, name=None):
+class Dropout(Layer):
+    def __init__(self, obj, rate, seed=None, name=None):
         super().__init__(obj, name=name)
-        self.rate = theano.shared(rate)
+        self.srng = MRG_RandomStreams(12345 if seed is None else seed)
+        self.rate = theano.shared(rate)#.astype(theano.config.floatX)
+        obj.dropout_rate_lst += [(rate, self.rate)]
+        self.n_out = obj.layerlst[-1].n_out
 
     def out(self):
         obj     = self.obj
-        obj.out = T.where(srng.uniform(size=obj.train_out.shape) > self.rate, obj.out, 0)
+        obj.out = T.where(self.srng.uniform(size=obj.out.shape) > self.rate, obj.out, 0)
         return obj
 
     def update(self):

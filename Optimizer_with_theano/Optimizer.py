@@ -20,12 +20,13 @@ import sys
 sys.setrecursionlimit(10000)
 
 from .Input import Input_layer
-from .Dense import Dense_layer
+from .Dense import Dense_layer, Accum_layer
 from .Polynominal import Polynominal_layer
 from .Conv import Conv2D_layer
 from .RNN  import RNN_layer
-
 from .Pool import Pool_layer
+
+from .Dropout import Dropout
 from .Modify import Flatten, Reshape
 from .Datasets import set_datasets
 #import Datasets as ds
@@ -57,6 +58,7 @@ class optimizer:
             self.set_variables()
         
         self.thetalst = [] #if thetalst is None else thetalst
+        self.dropout_rate_lst = []
         
         self.n_view = None
         self.updatelst = []
@@ -84,12 +86,6 @@ class optimizer:
         
         self.nodelst = [[int(np.prod(self.x_train_arr.shape[1:]))]] # if nodelst is None else nodelst
         self.layerlst = [Input_layer(self)]
-        
-        self.train_xgivenlst = [self.x_train_arr]
-        self.train_ygivenlst = [self.y_train_arr]
-        self.test_xgivenlst = [self.x_test_arr]
-        self.test_ygivenlst = [self.y_test_arr]
-        
     
     def set_variables(self):
         if self.n_batch.get_value() > self.x_train_arr.shape[0]: 
@@ -127,10 +123,19 @@ class optimizer:
         #self.batch_shape_of_C = T.concatenate([T.as_tensor([self.n_batch]), theano.shared(np.array([3]))], axis=0)
         self.xlst = [self.x]
         self.ylst = [self.y]
+        self.train_xgivenlst = [self.x_train_arr]
+        self.train_ygivenlst = [self.y_train_arr]
+        self.test_xgivenlst = [self.x_test_arr]
+        self.test_ygivenlst = [self.y_test_arr]
         
-    def set_datasets(self, data="mnist", is_one_hot=True):
+    def set_datasets(self, 
+                     data="mnist", 
+                     is_one_hot=True, 
+                     test_size=0.1, 
+                     is_shuffle=False, 
+                     **kwarg):
         obj = self.copy()
-        obj.set_data(*set_datasets(data, is_one_hot))
+        obj.set_data(*set_datasets(data, is_one_hot, **kwarg), test_size=test_size, is_shuffle=is_shuffle)
         obj.set_variables()
         return obj
     
@@ -144,13 +149,17 @@ class optimizer:
     def get_curr_node(self):
         return list(self.nodelst[-1])
     
-    #def dropout(self, rate=0.5, seed=None):
-    #    obj = self.copy()
-    #    
-    #    srng = RandomStreams(seed)
-    #    obj.out = T.where(srng.uniform(size=obj.out.shape) > rate, obj.out, 0)
-    #    
-    #    return obj
+    def dropout(self, rate=0.5, seed=None, name=None):
+        obj = self.copy()
+        layer = Dropout(obj, 
+                        rate,
+                        seed,
+                        name
+                        )
+        
+        obj   = layer.update()
+        obj.layerlst += [layer]
+        return obj
         
     def dense(self, 
               n_out,
@@ -170,15 +179,33 @@ class optimizer:
         obj.layerlst += [layer]
         return obj
     
+    def accum(self, 
+              n_out,
+              init_kinds="xavier",
+              random_kinds="normal",
+              random_params=(0, 1),
+              name=None
+             ):
+        obj = self.copy()
+        layer = Accum_layer(obj, 
+                            n_out,
+                            init_kinds,
+                            random_kinds,
+                            random_params
+                           )
+        obj   = layer.update()
+        obj.layerlst += [layer]
+        return obj
+    
     def rnn(self, 
             n_out, 
             axis=0, 
             init_kinds="xavier",
             random_kinds="normal",
             random_params=(0, 1),
-            is_out=True,
+            is_out=False,
             name=None,
-            activation="relu",
+            activation="linear",
            ):
         obj = self.copy()
         layer = RNN_layer(obj,
@@ -397,7 +424,10 @@ class optimizer:
         
     def loss_mse(self):
         obj = self.copy()
-        obj.loss =  T.mean((obj.out - obj.y) ** 2)
+        diff = obj.y - obj.out
+        obj.loss =  T.mean((diff) ** 2)
+        obj.train_acc = 1 - ((diff**2).sum() / ((obj.y.flatten() - obj.y.mean())**2).sum())
+        obj.valid_acc = 1 - ((diff**2).sum() / ((obj.y.flatten() - obj.y.mean())**2).sum())
         return obj
     
     def loss_mse_self(self, input_tensor):
@@ -413,16 +443,9 @@ class optimizer:
         #obj.loss =  -T.mean(obj.y * T.log(obj.out + 1e-8) -(1-obj.y) * T.log(1-obj.out + 1e-8))
         obj.out  = obj.out.argmax(axis=1)[:,None]
         obj.y    = obj.y.argmax(axis=1)[:,None]
-        obj.params = obj.params[::-1]
-        return obj
-    
-    def loss_softmax_cross_entropy(self):
-        obj = self.copy()
-        obj.out = nnet.softmax(obj.out)
-        tmp_y = T.cast(obj.y, "int32")
-        obj.loss = -T.mean(T.log(obj.out)[T.arange(obj.y.shape[0]), tmp_y.flatten()])
-        obj.out  = obj.out.argmax(axis=1)[:,None]
-        
+        #obj.params = obj.params[::-1]
+        obj.train_acc = (T.eq(obj.out,obj.y).sum().astype(theano.config.floatX) / obj.n_batch)
+        obj.valid_acc = (T.eq(obj.out,obj.y).sum().astype(theano.config.floatX) / obj.x_test_arr.shape[0])
         return obj
     
     def opt_sgd(self, alpha=0.1):
@@ -449,7 +472,6 @@ class optimizer:
     def opt_AdaGrad(self, ini_eta=0.001, ep=1e-8):
         obj = self.copy()
         obj.updatelst = []
-                               
         obj.hlst = [theano.shared(ep*np.ones(x.get_value().shape, theano.config.floatX)) for x in obj.thetalst]
         obj.etalst = [theano.shared(ini_eta*np.ones(x.get_value().shape, theano.config.floatX)) for x in obj.thetalst]
         
@@ -519,10 +541,8 @@ class optimizer:
             test_ygivens += [(t, ygiven_shared[obj.idx[i:obj.n_batch+i],])]
             test_ygivens_acc += [(t, ygiven_shared)]
             
-        
-        train_acc = (T.eq(obj.out,obj.y).sum().astype(theano.config.floatX) / obj.n_batch)
         obj.train_loss_and_acc = theano.function(inputs=[i],
-                                        outputs=[obj.loss, train_acc],
+                                        outputs=[obj.loss, obj.train_acc],
                                         givens=train_xgivens+train_ygivens,
                                         #givens=[(obj.x,x_train_arr_shared[obj.idx[i:obj.n_batch+i],]),
                                         #        (obj.y,y_train_arr_shared[obj.idx[i:obj.n_batch+i],])],
@@ -532,9 +552,8 @@ class optimizer:
                                         on_unused_input='ignore')
         
         
-        valid_acc = (T.eq(obj.out,obj.y).sum().astype(theano.config.floatX) / obj.x_test_arr.shape[0])
         obj.valid_loss_and_acc = theano.function(inputs=[],
-                                        outputs=[obj.loss, valid_acc],
+                                        outputs=[obj.loss, obj.valid_acc],
                                         givens=test_xgivens_acc+test_ygivens_acc,
                                         on_unused_input='ignore')
         
@@ -547,7 +566,7 @@ class optimizer:
     
         return obj
             
-    def optimize(self, n_epoch=10, n_view=1000, n_iter=None):
+    def optimize(self, n_epoch=10, n_view=1000, n_iter=None, is_view=True):
         obj = self.copy()
         
         if obj.n_view is None: obj.n_view = n_view  
@@ -586,7 +605,11 @@ class optimizer:
                     train_loss_value, train_acc_value = obj.train_loss_and_acc(i)
                     train_loss_lst += [train_loss_value]
                     train_acc_lst  += [train_acc_value]
+                    
+                
+                [x[1].set_value(0) for x in self.dropout_rate_lst]
                 valid_loss_value, valid_acc_value = obj.valid_loss_and_acc()
+                [x[1].set_value(x[0]) for x in self.dropout_rate_lst]
                 train_mean_loss_value = np.array(train_loss_lst).mean()
                 train_mean_acc_value  = np.array(train_acc_lst).mean()
                 obj.train_loss_lst   += train_loss_lst
@@ -600,10 +623,17 @@ class optimizer:
                                                                                                         valid_loss_value,
                                                                                                         valid_acc_value))
             
+            
         except KeyboardInterrupt:
             print ( "KeyboardInterrupt\n" )
             obj.n_epoch = epoch
+            if is_view:
+                obj.view()
             return obj
+        
+        if is_view:
+            obj.view()
+            
         return obj
     
     def save(self, path):
