@@ -3,7 +3,7 @@ Simple deep learning or machine learning framework for now.
 
 Manual page is [here](https://uyuutosa.github.io/Optimizer_with_theano).
 
-You can install as type
+You can install as type:
 
 ```sh
 pip install Optimizer_with_theano
