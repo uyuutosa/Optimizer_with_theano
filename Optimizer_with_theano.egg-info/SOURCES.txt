@@ -1,6 +1,8 @@
 MANIFEST.in
 setup.py
+Optimizer_with_theano/API.py
 Optimizer_with_theano/Activation.py
+Optimizer_with_theano/CompileAndOptimize.py
 Optimizer_with_theano/Conv.py
 Optimizer_with_theano/Datasets.py
 Optimizer_with_theano/Dense.py
@@ -8,6 +10,8 @@ Optimizer_with_theano/Dropout.py
 Optimizer_with_theano/Initializer.py
 Optimizer_with_theano/Input.py
 Optimizer_with_theano/Layer.py
+Optimizer_with_theano/LayerInfo.py
+Optimizer_with_theano/Loss.py
 Optimizer_with_theano/Modify.py
 Optimizer_with_theano/Optimizer.py
 Optimizer_with_theano/Polynominal.py

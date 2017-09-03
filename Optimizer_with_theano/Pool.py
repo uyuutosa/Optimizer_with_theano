@@ -5,8 +5,15 @@ from sklearn.datasets import *
 from .Layer import *
 
 class Pool_layer(Layer):
-    def __init__(self, obj, ds=(2,2), name=None):
-        super().__init__(obj, name=name)
+    def __init__(self, 
+                 obj, 
+                 ds=(2,2), 
+                 activation="linear",
+                 name=None):
+        
+        super().__init__(obj, 
+                         activation=activation, 
+                         name=name)
         self.ds  = ds
 
     def out(self):
@@ -14,16 +21,13 @@ class Pool_layer(Layer):
         n_in = list(self.n_in)
         
         obj.out = signal.pool.pool_2d(obj.out, ds=self.ds, ignore_border=True)
-        
 
         n_in[-2] = n_in[-2] // self.ds[0] #+ (1 if (n_in[-2] % ds[0]) else 0)
         n_in[-1] = n_in[-1] // self.ds[1] #+ (1 if (n_in[-1] % ds[1]) else 0)
 
         self.n_out = tuple(n_in)
-        
-    def update(self):
-        self.out()
-        self.obj.update_node(self.n_out)
 
-        return self.obj
-
+    def gen_name(self):
+        if self.name is None:
+            self.name = "Pool_{}".format(self.obj.layer_info.layer_num)
+            

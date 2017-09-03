@@ -22,7 +22,10 @@ def gen_time_series(v, data_length, predict_length):
     y = v[y_idx_f].reshape(-1, predict_length)
     return x, y, xidx[:-predict_length], yidx[:-predict_length]
  
-def set_datasets(data="mnist", is_one_hot=True, is_normalize=True, **kwarg):
+def set_datasets(data="mnist", 
+                 is_one_hot=True, 
+                 is_normalize=True, 
+                 **kwarg):
     data_home="/".join(__file__.split("/")[:-1])+"/data_dir_for_optimizer"
     if data == "mnist":
         data_dic = fetch_mldata('MNIST original', data_home=data_home)
@@ -88,5 +91,8 @@ def set_datasets(data="mnist", is_one_hot=True, is_normalize=True, **kwarg):
         v = v[:-1000]
         x, y, xidx, yidx = gen_time_series(v, 10, 1)
         data_dic = {"data": x, "target": y}
+        
+    if "data_only"in kwarg:
+        data_dic["target"] = data_dic["data"]
         
     return data_dic["data"], data_dic["target"]

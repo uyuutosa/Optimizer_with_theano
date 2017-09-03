@@ -12,34 +12,53 @@ from .Layer import *
 class Conv2D_layer(Layer):
     def __init__(self, 
                  obj, 
-                 kshape=(1,1,3,3), 
+                 kshape=(1,3,3), 
                  mode="full", 
                  reshape=None, 
                  init_kinds="xavier",
                  random_kinds="normal",
                  random_params=(0, 1),
+                 activation="linear",
+                 theta=None,
+                 b=None,
+                 is_train=True,
                  name=None
                 ):
-        super().__init__(obj, name=name)
+        super().__init__(obj, activation=activation, name=name)
         self.obj     = obj.copy()
         self.kshape  = kshape
         self.mode    = mode
         self.reshape = reshape
         #self.theta   = theano.shared(np.random.uniform(0, 0.05, ).astype(dtype=theano.config.floatX), borrow=True)
         #self.b       = theano.shared(np.random.uniform(0, 0.05, 1).astype(dtype=theano.config.floatX)[0], borrow=True)
-        self.theta   = theano.shared(Initializer(name=init_kinds,
-                                                 random_kinds=random_kinds,
-                                                 random_params=random_params,
-                                                 shape=kshape,
-                                                 ).out.astype(dtype=theano.config.floatX), borrow=True)
-        #self.b       = theano.shared(Initializer(name=init_kinds,
-        #                                         n_in=n_in,
-        #                                         n_out=n_out,
-        #                                         random_kinds=random_kinds,
-        #                                         random_params=random_params,
-        #                                         shape=(n_out),
-        #                                         ).out.astype(dtype=theano.config.floatX), borrow=True)
-        self.obj.params += [self.theta]#, self.b]
+        kshape = (kshape[0], 
+                  obj.layer_info.get_shape_of_last_node()[0], 
+                  kshape[1], 
+                  kshape[2])
+        if theta is None:
+            self.theta   = theano.shared(Initializer(name=init_kinds,
+                                                     random_kinds=random_kinds,
+                                                     random_params=random_params,
+                                                     shape=kshape,
+                                                     ).out.astype(dtype=theano.config.floatX), borrow=True)
+        else:
+            self.theta   = theano.shared(theta.astype(dtype=theano.config.floatX), borrow=True)
+            
+        if b is None:
+            self.b       = theano.shared(Initializer(name=init_kinds,
+                                                     random_kinds=random_kinds,
+                                                     random_params=random_params,
+                                                     shape=(kshape[0],),
+                                                     ).out.astype(dtype=theano.config.floatX), borrow=True)
+        else:
+            self.b       = theano.shared(b.astype(dtype=theano.config.floatX), borrow=True)
+            
+        self.gen_name()
+        if is_train:
+            self.params = {self.name + "_theta":self.theta, self.name + "_b":self.b} 
+        else:
+            self.params = {}
+        
 
     def out(self):
         obj = self.obj
@@ -59,10 +78,10 @@ class Conv2D_layer(Layer):
     
         if self.mode == "full":
             n_out = (self.kshape[0], n_in[-2] + (self.kshape[-2] - 1), n_in[-1] + (self.kshape[-1] - 1))
-            obj.out = nnet.conv2d(obj.out, self.theta, border_mode=self.mode) #+ self.b
+            obj.out = self.b.reshape((-1,1,1)) + nnet.conv2d(obj.out, self.theta, border_mode=self.mode)
         elif self.mode == "valid":
             n_out = (self.kshape[0], n_in[-2] - (self.kshape[-2] - 1), n_in[-1] - (self.kshape[-1] - 1))
-            obj.out = nnet.conv2d(obj.out, self.theta, border_mode=self.mode) #+ self.b
+            obj.out = self.b.reshape((-1,1,1)) + nnet.conv2d(obj.out, self.theta, border_mode=self.mode) 
         else:
             n_out   = (self.kshape[0], n_in[-2], n_in[-1])
             h_v, w_v = n_out[-2], n_out[-1]
@@ -80,16 +99,15 @@ class Conv2D_layer(Layer):
             if h_right == 0: h_right = -1
             if h_left  == 0: h_left = -1
             
-            obj.out = nnet.conv2d(obj.out, self.theta, border_mode="full")[:,:, h_left:-h_right, w_left:-w_right] #+ self.b
+            obj.out = self.b.reshape((-1,1,1)) + nnet.conv2d(obj.out, self.theta, border_mode="full")[:,:, h_left:-h_right, w_left:-w_right]
 
         self.n_out = n_out
         
         return obj
 
-    def update(self):
-        self.out()
-        self.obj.update_node(self.n_out)
-        return self.obj
+    def gen_name(self):
+        if self.name is None:
+            self.name = "Conv2D_{}".format(self.obj.layer_info.layer_num)
 
 
 #class Conv2D_layer(Layer):

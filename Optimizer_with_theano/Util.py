@@ -4,7 +4,39 @@ import matplotlib.pyplot as plt
 from .Datasets import gen_time_series
 import numpy as np
 
+def conv_ndarr_if_shared(arr):
+    return arr if type(arr) is np.ndarray else arr.eval()
 
+def conv_shared_if_ndarr(arr, dtype=theano.config.floatX):
+    return theano.shared(arr.astype(dtype)) if type(arr) is np.ndarray else arr
+
+
+def train_test_split(x_arr, y_arr, test_size, is_shuffle=None):
+    is_x_shared = True if type(x_arr) is np.ndarray else False
+    
+    n_row = conv_ndarr_if_shared(x_arr).shape[0]
+        
+    if is_shuffle:
+        idx = np.random.permutation(n_row)
+        x_arr = x_arr[idx]
+        y_arr = y_arr[idx]
+        
+    lim = int(n_row * (1 - test_size))
+    x_train_arr = x_arr[:lim]
+    x_test_arr  = x_arr[lim:]
+    y_train_arr = y_arr[:lim]
+    y_test_arr  = y_arr[lim:]
+    train_n_row = lim
+    test_n_row = n_row - lim
+    
+    return x_train_arr,\
+           x_test_arr,\
+           y_train_arr,\
+           y_test_arr,\
+           n_row,\
+           train_n_row,\
+           test_n_row
+    
 class Time_series_evaluator:
     def __init__(self, obj):
         self.obj = obj

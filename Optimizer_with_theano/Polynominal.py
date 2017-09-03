@@ -14,8 +14,8 @@ class Polynominal_layer(Layer):
                  activation="linear",
                  name=None
                 ):
-        super().__init__(obj, name=name)
-        n_in = obj.layerlst[-1].n_out[0]
+        super().__init__(obj, activation=activation, name=name)
+        n_in = obj.layer_info.layerlst[-1].n_out[0]
         self.n_out   = (n_out,)
         self.obj = obj
         

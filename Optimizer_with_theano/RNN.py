@@ -19,9 +19,12 @@ class RNN_layer(Layer):
                  random_kinds="normal", 
                  random_params=(0, 1),
                  is_out=False, 
-                 name=None, 
-                 activation=None):
-        super().__init__(obj, name=name)
+                 is_train=True,
+                 activation=None,
+                 name=None):
+        super().__init__(obj, 
+                         activation=activation,
+                         name=name)
         self.obj = obj.copy()
         self.n_in = n_in = obj.layerlst[-1].n_out
         self.n_iter = n_in[axis]
@@ -65,7 +68,13 @@ class RNN_layer(Layer):
                                                  shape=(n_out),
                                                  ).out.astype(dtype=theano.config.floatX), borrow=True)
         
-        self.obj.params += [self.theta, self.theta2, self.b]
+        #self.obj.params += [self.theta, self.theta2, self.b]
+        if is_train:
+            self.params = {self.name + "_theta":self.theta, 
+                           self.name + "_theta2":self.theta2, 
+                           self.name + "_b":self.b} 
+        else:
+            self.params = {}
 
     def out(self):
         obj = self.obj
@@ -114,15 +123,10 @@ class RNN_layer(Layer):
             #obj.out = arr[...,None].transpose(self.tidx)
             #self.n_out = tuple(self.shape)
             #self.n_out = tuple(self.shape)
-        
-        return obj
 
-    def update(self):
-        self.out()
-        self.obj.update_node(self.n_out)
-        return self.obj
-
-
+    def gen_name(self):
+        if self.name is None:
+            self.name = "RNN_{}".format(self.obj.layer_num)
 
 """
 class LSTM_layer(Layer):

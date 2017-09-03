@@ -3,7 +3,7 @@ Simple deep learning or machine learning framework for now.
 
 Manual page is [here](https://uyuutosa.github.io/Optimizer_with_theano).
 
-You can install as type
+You can install as type:
 
 ```sh
 pip install Optimizer_with_theano
@@ -12,29 +12,87 @@ pip install Optimizer_with_theano
 Test MNIST with multiclass logistic regression
 
 ```python
+import Optimizer_with_theano as op
 o = op.optimizer(128)
 o = o.set_datasets()
-o = o.dense(400).relu()
-o = o.dense(30).relu()
-o = o.dense(20).relu()
-o = o.dense(10)
-o = o.softmax().loss_cross_entropy()
+o = o.dense(400, act="relu")
+o.dense(30,  act="relu")
+o.dense(20,  act="relu")
+o.dense(10)
+o.softmax().loss_cross_entropy()
 o = o.opt_Adam(0.001).compile()
 o = o.optimize(100, 10)
-o.view()
 ```
 ```
-Epoch. 0: loss = 8.2190e-01, acc = 7.2837e-01, valid. loss = 3.9006e-01, valid. acc. = 8.8486e-01.
-Epoch. 10: loss = 6.5173e-02, acc = 9.8186e-01, valid. loss = 1.2214e-01, valid. acc. = 9.6129e-01.
-Epoch. 20: loss = 2.7904e-02, acc = 9.9276e-01, valid. loss = 9.4638e-02, valid. acc. = 9.7014e-01.
-Epoch. 30: loss = 1.1290e-02, acc = 9.9784e-01, valid. loss = 9.5740e-02, valid. acc. = 9.7343e-01.
-Epoch. 40: loss = 4.4421e-03, acc = 9.9962e-01, valid. loss = 9.2676e-02, valid. acc. = 9.7586e-01.
-Epoch. 50: loss = 1.6348e-03, acc = 9.9998e-01, valid. loss = 1.0095e-01, valid. acc. = 9.7643e-01.
-Epoch. 60: loss = 6.9370e-04, acc = 1.0000e+00, valid. loss = 1.0945e-01, valid. acc. = 9.7629e-01.
-Epoch. 70: loss = 3.0688e-04, acc = 1.0000e+00, valid. loss = 1.1512e-01, valid. acc. = 9.7657e-01.
-Epoch. 80: loss = 1.4491e-04, acc = 1.0000e+00, valid. loss = 1.2495e-01, valid. acc. = 9.7700e-01.
-Epoch. 90: loss = 6.0175e-05, acc = 1.0000e+00, valid. loss = 1.3110e-01, valid. acc. = 9.7743e-01.
+====================================
+layer 0
+name:Input_0
+in:(784,)
+out:(784,)
+====================================
+layer 1
+name:Dense_1
+in:(784,)
+out:(400,)
+Num of params:314000
+Params:
+------------------------------------
+Dense_1_theta:[784 400]
+Dense_1_b:[400]
+------------------------------------
+activation:relu
+====================================
+layer 2
+name:Dense_2
+in:(400,)
+out:(30,)
+Num of params:12030
+Params:
+------------------------------------
+Dense_2_theta:[400  30]
+Dense_2_b:[30]
+------------------------------------
+activation:relu
+====================================
+layer 3
+name:Dense_3
+in:(30,)
+out:(20,)
+Num of params:620
+Params:
+------------------------------------
+Dense_3_theta:[30 20]
+Dense_3_b:[20]
+------------------------------------
+activation:relu
+====================================
+layer 4
+name:Dense_4
+in:(20,)
+out:(10,)
+Num of params:210
+Params:
+------------------------------------
+Dense_4_theta:[20 10]
+Dense_4_b:[10]
+------------------------------------
+activation:linear
+====================================
+Total num. of params:326860
+====================================
+Epoch. 0: loss = 7.7385e-01, acc = 7.5171e-01, valid. loss = 3.3977e-01, valid. acc. = 8.9871e-01.
+Epoch. 10: loss = 5.4824e-02, acc = 9.8429e-01, valid. loss = 1.0058e-01, valid. acc. = 9.6814e-01.
+Epoch. 20: loss = 1.7504e-02, acc = 9.9644e-01, valid. loss = 8.7811e-02, valid. acc. = 9.7400e-01.
+Epoch. 30: loss = 5.6043e-03, acc = 9.9940e-01, valid. loss = 9.0656e-02, valid. acc. = 9.7529e-01.
+Epoch. 40: loss = 1.5540e-03, acc = 9.9995e-01, valid. loss = 9.7854e-02, valid. acc. = 9.7657e-01.
+Epoch. 50: loss = 5.1380e-04, acc = 1.0000e+00, valid. loss = 1.0863e-01, valid. acc. = 9.7671e-01.
+Epoch. 60: loss = 2.1099e-04, acc = 1.0000e+00, valid. loss = 1.1650e-01, valid. acc. = 9.7614e-01.
+Epoch. 70: loss = 9.0300e-05, acc = 1.0000e+00, valid. loss = 1.2567e-01, valid. acc. = 9.7671e-01.
+Epoch. 80: loss = 4.0663e-05, acc = 1.0000e+00, valid. loss = 1.3309e-01, valid. acc. = 9.7557e-01.
+Epoch. 90: loss = 1.8589e-05, acc = 1.0000e+00, valid. loss = 1.4004e-01, valid. acc. = 9.7629e-01.
+
 ```
+![compareing](images/loss_and_acc.png)
 
 or use CNN (a little)
 
@@ -42,27 +100,95 @@ or use CNN (a little)
 #One linear coding suppotted(but I do not use it)..
 import Optimizer_with_theano as op
 o = op.optimizer(128)\
-      .set_datasets()\
-      .reshape((1,28,28))\
-      .conv_and_pool(64,3,3, "same")\
-      .conv_and_pool(32,3,3, "same")\
-      .flatten().dense(10)\
-      .softmax().loss_cross_entropy()\
-      .opt_Adam(0.001).compile()\
-      .optimize(100, 1)
+   ...:       .set_datasets()\
+   ...:       .reshape((1,28,28))\
+   ...:       .conv_and_pool(64,3,3, "same", act="relu")\
+   ...:       .conv_and_pool(32,3,3, "same", act="relu")\
+   ...:       .flatten().dense(10)\
+   ...:       .softmax().loss_cross_entropy()\
+   ...:       .opt_Adam(0.001).compile()\
+   ...:       .optimize(10, 1)
+
 ```
 
 ```
-Epoch. 0: loss = 6.8408e-01, acc = 7.8419e-01, valid. loss = 2.1394e-01, valid. acc. = 9.3871e-01.
-Epoch. 10: loss = 4.2716e-02, acc = 9.8716e-01, valid. loss = 5.1318e-02, valid. acc. = 9.8314e-01.
-Epoch. 20: loss = 2.9371e-02, acc = 9.9140e-01, valid. loss = 3.8624e-02, valid. acc. = 9.8800e-01.
-Epoch. 30: loss = 2.0271e-02, acc = 9.9408e-01, valid. loss = 4.1340e-02, valid. acc. = 9.8671e-01.
-Epoch. 40: loss = 1.4117e-02, acc = 9.9594e-01, valid. loss = 3.9778e-02, valid. acc. = 9.8729e-01.
-Epoch. 50: loss = 9.5171e-03, acc = 9.9760e-01, valid. loss = 4.4686e-02, valid. acc. = 9.8729e-01.
-Epoch. 60: loss = 7.2461e-03, acc = 9.9819e-01, valid. loss = 5.0205e-02, valid. acc. = 9.8729e-01.
-Epoch. 80: loss = 2.3437e-03, acc = 9.9971e-01, valid. loss = 5.7557e-02, valid. acc. = 9.8614e-01.
-Epoch. 90: loss = 1.5257e-03, acc = 9.9987e-01, valid. loss = 6.4261e-02, valid. acc. = 9.8557e-01.
+====================================
+layer 0
+name:Input_0
+in:(784,)
+out:(784,)
+====================================
+layer 1
+name:Reshape_1
+in:(784,)
+out:(1, 28, 28)
+====================================
+layer 2
+name:Conv2D_2
+in:(1, 28, 28)
+out:(64, 28, 28)
+Num of params:640
+Params:
+------------------------------------
+Conv2D_2_theta:[64  1  3  3]
+Conv2D_2_b:[64]
+------------------------------------
+activation:relu
+====================================
+layer 3
+name:Pool_3
+in:(64, 28, 28)
+out:(64, 14, 14)
+====================================
+layer 4
+name:Conv2D_4
+in:(64, 14, 14)
+out:(32, 14, 14)
+Num of params:18464
+Params:
+------------------------------------
+Conv2D_4_theta:[32 64  3  3]
+Conv2D_4_b:[32]
+------------------------------------
+activation:relu
+====================================
+layer 5
+name:Pool_5
+in:(32, 14, 14)
+out:(32, 7, 7)
+====================================
+layer 6
+name:Flatten_6
+in:(32, 7, 7)
+out:(1568,)
+====================================
+layer 7
+name:Dense_7
+in:(1568,)
+out:(10,)
+Num of params:15690
+Params:
+------------------------------------
+Dense_7_theta:[1568   10]
+Dense_7_b:[10]
+------------------------------------
+activation:linear
+====================================
+Total num. of params:34794
+====================================
+Epoch. 0: loss = 1.0662e+00, acc = 6.4138e-01, valid. loss = 5.1562e-01, valid. acc. = 8.3400e-01.
+Epoch. 1: loss = 3.6077e-01, acc = 8.9030e-01, valid. loss = 3.4957e-01, valid. acc. = 8.9457e-01.
+Epoch. 2: loss = 2.4977e-01, acc = 9.2616e-01, valid. loss = 2.5022e-01, valid. acc. = 9.2300e-01.
+Epoch. 3: loss = 1.8599e-01, acc = 9.4529e-01, valid. loss = 1.8645e-01, valid. acc. = 9.4257e-01.
+Epoch. 4: loss = 1.4899e-01, acc = 9.5573e-01, valid. loss = 1.4960e-01, valid. acc. = 9.5529e-01.
+Epoch. 5: loss = 1.2659e-01, acc = 9.6278e-01, valid. loss = 1.3016e-01, valid. acc. = 9.6086e-01.
+Epoch. 6: loss = 1.1280e-01, acc = 9.6649e-01, valid. loss = 1.1962e-01, valid. acc. = 9.6400e-01.
+Epoch. 7: loss = 1.0240e-01, acc = 9.6979e-01, valid. loss = 1.0614e-01, valid. acc. = 9.6857e-01.
+Epoch. 8: loss = 9.5483e-02, acc = 9.7168e-01, valid. loss = 1.0817e-01, valid. acc. = 9.6614e-01.
+Epoch. 9: loss = 8.8111e-02, acc = 9.7359e-01, valid. loss = 9.2609e-02, valid. acc. = 9.7114e-01.
+
 ```
+![compareing](images/loss_and_acc_cnn.png)
 
 We try to simple time series prediction using blow data,
 

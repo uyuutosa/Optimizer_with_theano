@@ -9,17 +9,11 @@ class Reshape(Layer):
     def out(self):
         obj = self.obj
         obj.out = obj.out.reshape([-1, *self.n_out])
-        obj.update_node(self.n_out)
         return obj
-
-    def update(self):
-        self.out()
-        self.obj.update_node([self.n_out])
-        return self.obj
     
     def gen_name(self):
         if self.name is None:
-            self.name = "Reshape_{}".format(self.obj.layer_num)
+            self.name = "Reshape_{}".format(self.obj.layer_info.layer_num)
 
 class Flatten(Layer):
     def __init__(self, obj, name=None):
@@ -29,14 +23,8 @@ class Flatten(Layer):
         obj = self.obj
         self.n_out = (np.array(self.n_in).prod(),)
         obj.out = obj.out.reshape((-1, *self.n_out))
-        obj.update_node(self.n_out)
         return obj
 
-    def update(self):
-        self.out()
-        self.obj.update_node([self.n_out])
-        return self.obj
-    
     def gen_name(self):
         if self.name is None:
-            self.name = "Flatten_{}".format(self.obj.layer_num)
+            self.name = "Flatten_{}".format(self.obj.layer_info.layer_num)
