@@ -13,6 +13,8 @@ def Activation(name):
         return T.nnet.sigmoid
     elif name == "relu":
         return T.nnet.relu
+    elif name == "softmax":
+        return T.nnet.softmax
     elif name == "linear" or name is None:
         return lambda x:x
         

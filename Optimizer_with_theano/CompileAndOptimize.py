@@ -72,6 +72,7 @@ class CO_fast_but_takes_a_lot_of_memory(Compile_and_optimize):
                  n_view=10, 
                  n_iter=None, 
                  n_batch=None, 
+                 is_valid=True,
                  is_view=True):
         
             
@@ -110,32 +111,39 @@ class CO_fast_but_takes_a_lot_of_memory(Compile_and_optimize):
                     train_acc_lst  += [train_acc_value]
                     
                 
-                [x[1].set_value(0) for x in obj.dropout_rate_lst]
-                valid_loss_value, valid_acc_value = obj.valid_loss_and_acc()
-                [x[1].set_value(x[0]) for x in obj.dropout_rate_lst]
+                if is_valid:
+                    [x[1].set_value(0) for x in obj.dropout_rate_lst]
+                    valid_loss_value, valid_acc_value = obj.valid_loss_and_acc()
+                    [x[1].set_value(x[0]) for x in obj.dropout_rate_lst]
+                    obj.valid_loss_lst   += [valid_loss_value]
+                    obj.valid_acc_lst    += [valid_acc_value]
                 train_mean_loss_value = np.array(train_loss_lst).mean()
                 train_mean_acc_value  = np.array(train_acc_lst).mean()
                 obj.train_loss_lst   += train_loss_lst
                 obj.train_acc_lst    += train_acc_lst
-                obj.valid_loss_lst   += [valid_loss_value]
-                obj.valid_acc_lst    += [valid_acc_value]
                 if not (epoch % n_view):
-                    print("Epoch. %s: loss = %.4e, acc = %.4e, valid. loss = %.4e, valid. acc. = %.4e." %(epoch, 
+                    if is_valid:
+                        print("Epoch. %s: loss = %.4e, acc = %.4e, valid. loss = %.4e, valid. acc. = %.4e." %(epoch, 
                                                                                                         train_mean_loss_value, 
                                                                                                         train_mean_acc_value, 
                                                                                                         valid_loss_value,
                                                                                                         valid_acc_value))
+                    else:
+                        print("Epoch. %s: loss = %.4e, acc = %.4e." %(epoch,
+                                                                      train_mean_loss_value, 
+                                                                      train_mean_acc_value, 
+                                                                      ))
             
             
         except KeyboardInterrupt:
             print ( "KeyboardInterrupt\n" )
             obj.n_epoch = epoch
             if is_view:
-                obj.view()
+                obj.view(is_valid=is_valid)
             return obj
         
         if is_view:
-            obj.view()
+            obj.view(is_valid=is_valid)
             
         return obj
     
@@ -175,6 +183,7 @@ class CO_slow_but_only_few_memory_needed(Compile_and_optimize):
                  n_view=10, 
                  n_iter=None, 
                  n_batch=None, 
+                 is_valid=True,
                  is_view=True):
         obj = self.obj
         obj.layer_info.view_info()
@@ -211,32 +220,39 @@ class CO_slow_but_only_few_memory_needed(Compile_and_optimize):
                     train_acc_lst  += [train_acc_value]
                     
                 
-                [x[1].set_value(0) for x in obj.dropout_rate_lst]
-                valid_loss_value, valid_acc_value = obj.valid_loss_and_acc(*(obj.test_xgivenlst+obj.test_ygivenlst))
-                [x[1].set_value(x[0]) for x in obj.dropout_rate_lst]
+                if is_valid:
+                    [x[1].set_value(0) for x in obj.dropout_rate_lst]
+                    valid_loss_value, valid_acc_value = obj.valid_loss_and_acc(*(obj.test_xgivenlst+obj.test_ygivenlst))
+                    [x[1].set_value(x[0]) for x in obj.dropout_rate_lst]
+                    obj.valid_loss_lst   += [valid_loss_value]
+                    obj.valid_acc_lst    += [valid_acc_value]
                 
                 train_mean_loss_value = np.array(train_loss_lst).mean()
                 train_mean_acc_value  = np.array(train_acc_lst).mean()
                 obj.train_loss_lst   += train_loss_lst
                 obj.train_acc_lst    += train_acc_lst
-                obj.valid_loss_lst   += [valid_loss_value]
-                obj.valid_acc_lst    += [valid_acc_value]
                 if not (epoch % n_view):
-                    print("Epoch. %s: loss = %.4e, acc = %.4e, valid. loss = %.4e, valid. acc. = %.4e." %(epoch, 
+                    if is_valid:
+                        print("Epoch. %s: loss = %.4e, acc = %.4e, valid. loss = %.4e, valid. acc. = %.4e." %(epoch, 
                                                                                                         train_mean_loss_value, 
                                                                                                         train_mean_acc_value, 
                                                                                                         valid_loss_value,
                                                                                                         valid_acc_value))
+                    else:
+                        print("Epoch. %s: loss = %.4e, acc = %.4e." %(epoch,
+                                                                      train_mean_loss_value, 
+                                                                      train_mean_acc_value, 
+                                                                      ))
             
             
         except KeyboardInterrupt:
             print ( "KeyboardInterrupt\n" )
             obj.n_epoch = epoch
             if is_view:
-                obj.view()
+                obj.view(is_valid=is_valid)
             return obj
         
         if is_view:
-            obj.view()
+            obj.view(is_valid=is_valid)
             
         return obj

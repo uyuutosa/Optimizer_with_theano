@@ -26,7 +26,7 @@ from .Dense import Dense_layer, Accum_layer
 from .Polynominal import Polynominal_layer
 from .Conv import Conv2D_layer
 from .RNN  import RNN_layer
-from .Pool import Pool_layer
+from .Pool import Pool_layer, Unpool_layer
 
 from .Dropout import Dropout
 from .Modify import Flatten, Reshape
@@ -185,7 +185,6 @@ class optimizer:
                         )
         
         obj   = layer.update()
-        obj.layerlst += [layer]
         return obj
         
     def dense(self, 
@@ -314,6 +313,15 @@ class optimizer:
         obj   = layer.update()
         return obj
     
+    def unpool(self, 
+             ds=(2,2),
+             act="linear",
+             name=None):
+        obj = self.copy()
+        layer = Unpool_layer(obj, ds, activation=act, name=name)
+        obj   = layer.update()
+        return obj
+    
 #    def mean(self, axis):
 #        obj = self.copy()
 #        
@@ -421,21 +429,33 @@ class optimizer:
         obj = self.copy()
         obj.updatelst = [] 
         params = obj.layer_info.get_params() + input_grads
-        for theta in obj.layer_info.get_params():
-            g = theano.gradient.hessian(obj.loss, theta)
-            obj.updatelst += [(theta, theta - (alpha * T.nlinalg.matrix_inverse(g).dot(T.grad(obj.loss, wrt=theta))))]
-            
+        for theta in params:
+            g = T.grad(obj.loss, theta)
+            H = theano.gradient.jacobian(g.flatten(), theta)
+            obj.updatelst += [(theta, theta - (alpha * T.nlinalg.matrix_inverse(H).dot(T.grad(obj.loss, wrt=theta))))]
         return obj
     
-    def opt_RMSProp(self, alpha=0.1, gamma=0.9, ep=1e-8):
+    #def opt_bfgs(self, alpha=0.1, input_grads=[]):
+    #    obj = self.copy()
+    #    obj.updatelst = [] 
+    #    params = obj.layer_info.get_params() + input_grads
+    #    for theta in params:
+    #        n = theta.flatten().shape[0]
+    #        B = T.zeros((n, n))
+    #        g = T.grad(obj.loss, theta)
+    #        
+    #        obj.updatelst += [(theta, theta - (alpha * T.nlinalg.matrix_inverse(g).dot(T.grad(obj.loss, wrt=theta))))]
+    #    return obj
+    
+    def opt_RMSProp(self, alpha=0.001, gamma=0.9, ep=1e-8, input_grads=[]):
         obj = self.copy()
         obj.updatelst = []
-        params = obj.layer_info.get_params()
-        rlst = [theano.shared(x.shape).astype(theano.config.floatX) for x in params]
+        params = obj.layer_info.get_params() + input_grads
+        rlst = [theano.shared(np.zeros(x.get_value().shape, theano.config.floatX)) for x in params]
         
         for r, theta in zip(rlst, params):
             g = T.grad(obj.loss, wrt=theta)
-            obj.updatelst += [(r, gamma * r + (1 - gamma) * g ** 2),\
+            obj.updatelst += [(r,     gamma * r + (1 - gamma) * g ** 2),\
                               (theta, theta - (alpha / (T.sqrt(r) + ep)) * g)]
             
         return obj
@@ -445,7 +465,7 @@ class optimizer:
         obj.updatelst = []
         params = obj.layer_info.get_params() + input_grads
             
-        hlst = [theano.shared(ep*np.ones(x.get_value().shape, theano.config.floatX)) for x in params]
+        hlst   = [theano.shared(ep*np.ones(x.get_value().shape, theano.config.floatX)) for x in params]
         etalst = [theano.shared(ini_eta*np.ones(x.get_value().shape, theano.config.floatX)) for x in params]
         
         for h, eta, theta in zip(hlst, etalst, params):
@@ -496,9 +516,10 @@ class optimizer:
                  n_view=10, 
                  n_iter=None, 
                  n_batch=None, 
+                 is_valid=True,
                  is_view=True):
         
-        return self.CO.optimize(n_epoch, n_view, n_iter, n_batch, is_view)
+        return self.CO.optimize(n_epoch, n_view, n_iter, n_batch, is_valid, is_view)
     
     def save(self, path):
         with open(path, 'wb') as f:
@@ -509,7 +530,7 @@ class optimizer:
             return pickle.load(f)
 
         
-    def view(self, yscale="log"):
+    def view(self, yscale="log", is_valid=True):
         if not len(self.train_loss_lst):
             raise ValueError("Loss value is not be set.")
         plt.clf()
@@ -521,15 +542,18 @@ class optimizer:
         plt.ylabel("Loss")
         plt.yscale(yscale)
         plt.plot(train_idx, self.train_loss_lst, c="r", label="train")
-        plt.plot(valid_idx, self.valid_loss_lst, c="b", label="validate")
+        if is_valid:
+            plt.plot(valid_idx, self.valid_loss_lst, c="b", label="validate")
         plt.legend()
+        
 
         plt.subplot(2,1,2)
         plt.ylim(0, 1.1)
         plt.xlabel("Epoch")
         plt.ylabel("Accuracy")
         plt.plot(train_idx, self.train_acc_lst, c="r", label="train")
-        plt.plot(valid_idx, self.valid_acc_lst, c="b", label="validate")
+        if is_valid:
+            plt.plot(valid_idx, self.valid_acc_lst, c="b", label="validate")
         plt.legend()
         plt.show()
     

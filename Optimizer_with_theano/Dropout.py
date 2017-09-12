@@ -6,7 +6,7 @@ class Dropout(Layer):
         super().__init__(obj, name=name)
         self.srng = MRG_RandomStreams(12345 if seed is None else seed)
         self.rate = theano.shared(rate)#.astype(theano.config.floatX)
-        self.layer_info.set_dropout_param(rate, shared_rate)
+        self.obj.layer_info.set_dropout_param(rate, self.rate)
         #obj.dropout_rate_lst += [(rate, self.rate)]
         #self.n_out = obj.layerlst[-1].n_out
 
